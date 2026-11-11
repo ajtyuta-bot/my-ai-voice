@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My AI Voice</title>
+<style>
+body{margin:0;background:#101827;color:white;font-family:-apple-system,sans-serif;padding:20px}
+main{max-width:650px;margin:auto}
+h1{color:#73baff}
+textarea,select{box-sizing:border-box;width:100%;background:#202d40;color:white;border:1px solid #526176;border-radius:12px;padding:14px;font-size:16px}
+textarea{height:220px}
+label{display:block;margin:18px 0 8px}
+input[type=range]{width:100%}
+button{border:0;border-radius:12px;padding:15px;font-size:17px;font-weight:bold;color:white;background:#1677ed}
+.actions{display:flex;gap:10px;margin-top:25px}
+.actions button{flex:1}
+.stop{background:#dc4557}
+small{color:#b4c2d6}
+</style>
+</head>
+<body>
+<main>
+<h1>🎙 My AI Voice</h1>
+<p>自分好みのナレーターを作ろう</p>
+<label>読み上げる文章</label>
+<textarea id="script" placeholder="YouTubeの原稿を入力してください"></textarea>
+<label>声の種類</label>
+<select id="voice"></select>
+<label>話す速さ：<span id="speedValue">1.0</span></label>
+<input id="speed" type="range" min="0.5" max="1.8" step="0.1" value="1">
+<label>声の高さ：<span id="pitchValue">1.0</span></label>
+<input id="pitch" type="range" min="0.5" max="2" step="0.1" value="1">
+<div class="actions">
+<button onclick="speak()">▶ 再生</button>
+<button class="stop" onclick="speechSynthesis.cancel()">■ 停止</button>
+</div>
+<p id="status"></p>
+<small>無料・日本語対応。利用可能な声はiPhoneの設定によって異なります。</small>
+</main>
+<script>
+const synth=window.speechSynthesis;
+const voiceSelect=document.getElementById("voice");
+let voices=[];
+function loadVoices(){
+voices=synth.getVoices().filter(v=>v.lang.startsWith("ja"));
+voiceSelect.innerHTML="";
+voices.forEach((v,i)=>{
+let o=document.createElement("option");
+o.value=i;
+o.textContent=v.name+" ("+v.lang+")";
+voiceSelect.appendChild(o);
+});
+if(!voices.length){
+let o=document.createElement("option");
+o.textContent="日本語の標準音声";
+voiceSelect.appendChild(o);
+}
+}
+loadVoices();
+synth.onvoiceschanged=loadVoices;
+for(let id of ["speed","pitch"]){
+document.getElementById(id).oninput=e=>{
+document.getElementById(id+"Value").textContent=e.target.value;
+};
+}
+function speak(){
+synth.cancel();
+let text=document.getElementById("script").value.trim();
+if(!text){alert("文章を入力してください");return;}
+let u=new SpeechSynthesisUtterance(text);
+u.lang="ja-JP";
+if(voices[voiceSelect.value])u.voice=voices[voiceSelect.value];
+u.rate=Number(document.getElementById("speed").value);
+u.pitch=Number(document.getElementById("pitch").value);
+u.onstart=()=>document.getElementById("status").textContent="読み上げ中...";
+u.onend=()=>document.getElementById("status").textContent="読み上げ完了";
+u.onerror=()=>document.getElementById("status").textContent="読み上げが終了しました";
+synth.speak(u);
+}
+</script>
+</body>
+</html>
